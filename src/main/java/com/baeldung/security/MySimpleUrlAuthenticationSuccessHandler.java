@@ -1,7 +1,16 @@
 package com.baeldung.security;
 
-import com.baeldung.persistence.model.User;
-import com.baeldung.service.DeviceService;
+import static com.baeldung.web.util.Constats.APPROVE_PRIVILEGE;
+import static com.baeldung.web.util.Constats.WRITE_PRIVILEGE;
+import static com.baeldung.web.util.Constats.READ_PRIVILEGE;
+
+import java.io.IOException;
+import java.util.Collection;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,15 +23,13 @@ import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.util.Collection;
+import com.baeldung.persistence.model.User;
+import com.baeldung.service.DeviceService;
 
 @Component("myAuthenticationSuccessHandler")
 public class MySimpleUrlAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
 
@@ -82,14 +89,19 @@ public class MySimpleUrlAuthenticationSuccessHandler implements AuthenticationSu
     protected String determineTargetUrl(final Authentication authentication) {
         boolean isUser = false;
         boolean isAdmin = false;
+        boolean isManager = false;
         final Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         for (final GrantedAuthority grantedAuthority : authorities) {
-            if (grantedAuthority.getAuthority().equals("READ_PRIVILEGE")) {
+            if (READ_PRIVILEGE.equals(grantedAuthority.getAuthority())) {
                 isUser = true;
-            } else if (grantedAuthority.getAuthority().equals("WRITE_PRIVILEGE")) {
+            } else if (WRITE_PRIVILEGE.equals(grantedAuthority.getAuthority())) {
                 isAdmin = true;
                 isUser = false;
                 break;
+            } else if (APPROVE_PRIVILEGE.equals(grantedAuthority.getAuthority())) {
+            	isUser = false;
+            	isManager = true;
+            	break;
             }
         }
         if (isUser) {
@@ -100,10 +112,11 @@ public class MySimpleUrlAuthenticationSuccessHandler implements AuthenticationSu
              else {
              	username = authentication.getName();
              }
-
-            return "/homepage.html?user="+username;
+             return "/homepage.html?user="+username;
         } else if (isAdmin) {
             return "/console";
+        } else if (isManager) {
+            return "/management";
         } else {
             throw new IllegalStateException();
         }

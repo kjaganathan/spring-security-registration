@@ -1,12 +1,8 @@
 package com.baeldung.spring;
 
-import com.baeldung.persistence.dao.UserRepository;
-import com.baeldung.security.CustomRememberMeServices;
-import com.baeldung.security.google2fa.CustomAuthenticationProvider;
-import com.baeldung.security.google2fa.CustomWebAuthenticationDetailsSource;
-import com.baeldung.security.location.DifferentLocationChecker;
-import com.maxmind.geoip2.DatabaseReader;
-import com.maxmind.geoip2.exception.GeoIp2Exception;
+import java.io.File;
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -31,8 +27,11 @@ import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.authentication.rememberme.InMemoryTokenRepositoryImpl;
 
-import java.io.File;
-import java.io.IOException;
+import com.baeldung.security.CustomRememberMeServices;
+import com.baeldung.security.google2fa.CustomAuthenticationProvider;
+import com.baeldung.security.google2fa.CustomWebAuthenticationDetailsSource;
+import com.baeldung.security.location.DifferentLocationChecker;
+import com.maxmind.geoip2.DatabaseReader;
 
 @ComponentScan(basePackages = { "com.baeldung.security" })
 // @ImportResource({ "classpath:webSecurityConfig.xml" })
@@ -55,15 +54,11 @@ public class SecSecurityConfig extends WebSecurityConfigurerAdapter {
     private CustomWebAuthenticationDetailsSource authenticationDetailsSource;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private DifferentLocationChecker differentLocationChecker;
 
     public SecSecurityConfig() {
         super();
     }
-
 
     @Bean
     @Override
@@ -109,7 +104,7 @@ public class SecSecurityConfig extends WebSecurityConfigurerAdapter {
             .sessionManagement()
                 .invalidSessionUrl("/invalidSession.html")
                 .maximumSessions(1).sessionRegistry(sessionRegistry()).and()
-                .sessionFixation().none()
+                .sessionFixation().newSession()
             .and()
             .logout()
                 .logoutSuccessHandler(myLogoutSuccessHandler)
@@ -146,12 +141,11 @@ public class SecSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     public RememberMeServices rememberMeServices() {
-        CustomRememberMeServices rememberMeServices = new CustomRememberMeServices("theKey", userDetailsService, new InMemoryTokenRepositoryImpl());
-        return rememberMeServices;
+        return new CustomRememberMeServices("theKey", userDetailsService, new InMemoryTokenRepositoryImpl());
     }
 
     @Bean(name="GeoIPCountry")
-    public DatabaseReader databaseReader() throws IOException, GeoIp2Exception {
+    public DatabaseReader databaseReader() throws IOException {
         final File resource = new File("src/main/resources/maxmind/GeoLite2-Country.mmdb");
         return new DatabaseReader.Builder(resource).build();
     }

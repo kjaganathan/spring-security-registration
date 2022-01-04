@@ -58,6 +58,7 @@ public class MvcConfig implements WebMvcConfigurer {
         registry.addViewController("/changePassword.html");
         registry.addViewController("/users.html");
         registry.addViewController("/qrcode.html");
+        registry.addViewController("/management.html");
     }
 
     @Override
@@ -111,6 +112,6 @@ public class MvcConfig implements WebMvcConfigurer {
 
     @Bean
     WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> enableDefaultServlet() {
-        return (factory) -> factory.setRegisterDefaultServlet(true);
+        return factory -> factory.setRegisterDefaultServlet(true);
     }
 }

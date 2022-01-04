@@ -18,6 +18,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.baeldung.web.util.Constats.APPROVE_PRIVILEGE;
+import static com.baeldung.web.util.Constats.WRITE_PRIVILEGE;
+import static com.baeldung.web.util.Constats.READ_PRIVILEGE;
+import static com.baeldung.web.util.Constats.CHANGE_PASSWORD_PRIVILEGE;
+
+import static com.baeldung.web.util.Constats.ROLE_ADMIN;
+import static com.baeldung.web.util.Constats.ROLE_USER;
+import static com.baeldung.web.util.Constats.ROLE_MANAGER;
+
 @Component
 public class SetupDataLoader implements ApplicationListener<ContextRefreshedEvent> {
 
@@ -45,18 +54,27 @@ public class SetupDataLoader implements ApplicationListener<ContextRefreshedEven
         }
 
         // == create initial privileges
-        final Privilege readPrivilege = createPrivilegeIfNotFound("READ_PRIVILEGE");
-        final Privilege writePrivilege = createPrivilegeIfNotFound("WRITE_PRIVILEGE");
-        final Privilege passwordPrivilege = createPrivilegeIfNotFound("CHANGE_PASSWORD_PRIVILEGE");
+        final Privilege readPrivilege = createPrivilegeIfNotFound(READ_PRIVILEGE);
+        final Privilege writePrivilege = createPrivilegeIfNotFound(WRITE_PRIVILEGE);
+        final Privilege approvePrivilege = createPrivilegeIfNotFound(APPROVE_PRIVILEGE);
+        final Privilege passwordPrivilege = createPrivilegeIfNotFound(CHANGE_PASSWORD_PRIVILEGE);
 
         // == create initial roles
         final List<Privilege> adminPrivileges = new ArrayList<>(Arrays.asList(readPrivilege, writePrivilege, passwordPrivilege));
         final List<Privilege> userPrivileges = new ArrayList<>(Arrays.asList(readPrivilege, passwordPrivilege));
-        final Role adminRole = createRoleIfNotFound("ROLE_ADMIN", adminPrivileges);
-        createRoleIfNotFound("ROLE_USER", userPrivileges);
+        final List<Privilege> managerPrivileges = new ArrayList<>(Arrays.asList(readPrivilege, approvePrivilege));
+        final Role adminRole = createRoleIfNotFound(ROLE_ADMIN, adminPrivileges);
+        final Role userRole = createRoleIfNotFound(ROLE_USER, userPrivileges);
+        final Role managerRole = createRoleIfNotFound(ROLE_MANAGER, managerPrivileges);
 
         // == create initial user
         createUserIfNotFound("test@test.com", "Test", "Test", "test", new ArrayList<>(Arrays.asList(adminRole)));
+        
+        // == create initial user with user role
+        createUserIfNotFound("user@baeldung.com", "User", "User", "user", new ArrayList<>(Arrays.asList(userRole)));
+        
+        // == create initial manager with manger role
+        createUserIfNotFound("manager@baeldung.com", "Manager", "Manager", "manager", new ArrayList<>(Arrays.asList(managerRole)));
 
         alreadySetup = true;
     }
